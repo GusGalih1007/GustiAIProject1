@@ -13,12 +13,33 @@ dotenv.config();
 
 const genAi = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAi.getGenerativeModel({ model: 'models/gemini-1.5-flash' })
+const chat = model.startChat({
+    history: [],
+    generationConfig: {
+        temperature: 0.5,
+        topP: 1,
+        topK: 1
+    },
+    systemInstruction: {
+        role: "user",
+        parts: [
+            {
+                text: `
+                Kamu adalah seorang yang elegan dan bersifat bangsawan. gaya bicaramu cukup unik dan terkesan elegan dan
+                penuh perhitungan. sebagai bangsawan, kamu juga menggunakan istilah-istilah arkaik
+                jikalau user menggunakan bahasa inggris, maka gunakan dialek atau accent posh dengan
+                modifikasi dengan gaya bahasa inggris UK modern
+                `.trim(),
+            },
+        ],
+    },
+});
 
 // helper
 async function generateAiContent(prompt) {
     try
     {
-        const result = await model.generateContent(prompt);
+        const result = await chat.sendMessage(prompt);
         return (await result.response).text().trim();
     }
     catch (error)
@@ -28,6 +49,8 @@ async function generateAiContent(prompt) {
 }
 
 app.use(express.json());
+
+app.use(express.static('public'))
 
 // Endpoint
 
