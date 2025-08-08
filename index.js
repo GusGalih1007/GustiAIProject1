@@ -4,17 +4,52 @@
 //     res.write("Hello, this is Node.Js server")
 //     res.end();
 // });
-
 const express = require('express');
+const { GoogleGenerativeAI } =  require ('@google/generative-ai');
 const dotenv = require('dotenv');
-dotenv.config();
 const app = express();
 
-console.log(process.env.GEMINI_API_KEY);
+dotenv.config();
+
+const genAi = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAi.getGenerativeModel({ model: 'models/gemini-1.5-flash' })
+
+// helper
+async function generateAiContent(prompt) {
+    try
+    {
+        const result = await model.generateContent(prompt);
+        return (await result.response).text().trim();
+    }
+    catch (error)
+    {
+        throw new Error(error.message);
+    }
+}
 
 app.use(express.json());
 
 // Endpoint
+
+app.post('/generate-text', async (req, res) => {
+    console.log('REQ BODY:', req.body);
+    const { prompt } = req.body;
+
+    if (!prompt) {
+        return res.status(400).json({ error: "Prompt wajib diisi!"});
+    }
+
+    try 
+    {
+        const output = await generateAiContent(prompt);
+        res.json({ output });
+    }
+    catch (error)
+    {
+        res.status(500).json({ error: error.message })
+    }
+});
+
 app.get ('/', (req, res) => {
     res.send("Hello From Express.Js");
 });
