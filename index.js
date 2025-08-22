@@ -1,15 +1,23 @@
 // const http = require("http")
 
 // const server = http.createServer((req, res) => {
-//     res.write("Hello, this is Node.Js server")
-//     res.end();
-// });
+    //     res.write("Hello, this is Node.Js server")
+    //     res.end();
+    // });
+const ollama = require("ollama");
 const express = require('express');
-const { GoogleGenerativeAI } =  require ('@google/generative-ai');
+// const cors = require("cors")
 const dotenv = require('dotenv');
-const app = express();
+const { GoogleGenerativeAI } =  require ('@google/generative-ai');
+
+const path = require("path")
 
 dotenv.config();
+const app = express();
+const port = process.env.PORT || 3000;
+// app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 const genAi = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAi.getGenerativeModel({ model: 'models/gemini-1.5-flash' })
@@ -47,19 +55,28 @@ async function generateAiContent(prompt) {
         throw new Error(error.message);
     }
 }
-
-app.use(express.json());
-
-app.use(express.static('public'))
-
 // Endpoint
+app.post('/ask-query', async (req, res) => {
+  const { prompt } = req.body;
 
-app.post('/generate-text', async (req, res) => {
+  try {
+    const response = await ollama.chat({
+      model: 'hr.co/Qwen/Qwen3-8b-GGUF:Q4_K_M',
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    res.json({ reply: response.message.content });
+  } catch (error) {
+    res.status(500).send({ error: 'Error interacting with the model' });
+  }
+});
+
+app.post('/api/chat', async (req, res) => {
     console.log('REQ BODY:', req.body);
     const { prompt } = req.body;
 
     if (!prompt) {
-        return res.status(400).json({ error: "Prompt wajib diisi!"});
+        return res.status(400).json({ error: "No Messege Provided!"});
     }
 
     try 
