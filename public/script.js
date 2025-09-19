@@ -1,6 +1,18 @@
 const chatContainer = document.getElementById('chatContainer');
 const chatForm = document.getElementById('chatForm');
 const userInput = document.getElementById('userInput');
+const fileInput = document.getElementById('fileInput');
+const fileNameDisplay = document.getElementById('fileName');
+
+// Show selected file name
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length > 0) {
+    fileNameDisplay.textContent = fileInput.files[0].name;
+  } else {
+    fileNameDisplay.textContent = '';
+  }
+});
+
 
 // Scroll chat container to bottom
 function scrollToBottom() {
@@ -126,13 +138,32 @@ chatForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const prompt = userInput.value.trim();
-  if (!prompt) return;
+  const file = fileInput.files[0];
 
-  appendMessage('user', prompt);
+  if (!prompt && !file) return; // Require either prompt or file
+
+  appendMessage('user', prompt || '[Sent an image]');
+
   userInput.value = '';
   userInput.style.height = 'auto';
+  fileInput.value = '';
+  fileNameDisplay.textContent = '';
 
-  // Add loading indicator
+  function appendHtmlMessage(sender, htmlContent) {
+  const msg = document.createElement('div');
+  msg.classList.add('message', sender);
+
+  msg.innerHTML = htmlContent;
+
+  // Add copy button only for text messages (optional: skip for images)
+  // addCopyButton(msg);  // you can skip for image messages
+
+  chatContainer.appendChild(msg);
+  chatContainer.classList.remove('center');
+  scrollToBottom();
+}
+
+  // Loading indicator
   const loadingMsg = document.createElement('div');
   loadingMsg.classList.add('message', 'loading');
   loadingMsg.innerHTML = '<span></span>';
@@ -140,20 +171,53 @@ chatForm.addEventListener('submit', async (e) => {
   scrollToBottom();
 
   try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
-    });
+    let data;
+    if (file) {
+      // Send multipart/form-data
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('prompt', prompt);
 
-    const data = await res.json();
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      data = await res.json();
 
-    loadingMsg.remove();
+      loadingMsg.remove();
 
-    if (data.output) {
-      await appendTypingMessage(data.output);
+      if (data.output) {
+        appendHtmlMessage('ai', `
+  🖼️ <br>
+  <div class="img-preview-wrapper">
+    <img src="${data.fileUrl}" class="preview-image" />
+    <div class="img-hover-zoom">
+      <img src="${data.fileUrl}" />
+    </div>
+  </div>
+`);
+await appendTypingMessage(data.output);
+
+        await appendTypingMessage(data.output);
+      } else {
+        appendMessage('ai', "❌ Failed to process image.");
+      }
     } else {
-      appendMessage('ai', "Sorry, I couldn't generate a response.");
+      // Send JSON prompt only
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      data = await res.json();
+
+      loadingMsg.remove();
+
+      if (data.output) {
+        await appendTypingMessage(data.output);
+      } else {
+        appendMessage('ai', "Sorry, I couldn't generate a response.");
+      }
     }
   } catch (err) {
     console.error(err);

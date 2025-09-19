@@ -1,24 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Chatbot</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <div class="chat-wrapper">
     <div class="chat-container center" id="chatContainer">
       <!-- Messages go here -->
     </div>
 
-    <form class="chat-input" id="chatForm">
-      <textarea
-        id="userInput"
-        rows="1"
-        placeholder="Type your message..."
-        required
-      ></textarea>
+    <form class="chat-input" id="chatForm" enctype="multipart/form-data">
+      <textarea id="userInput" rows="1" placeholder="Type your message..." required></textarea>
+
+      <!-- File upload button -->
+      <label for="fileInput" class="custom-file-upload" title="Upload Image">
+        📎
+      </label>
+      <input type="file" id="fileInput" name="file" accept="image/*" />
+
+      <!-- Show chosen file name -->
+      <span id="fileName" class="file-name"></span>
+
       <button type="submit">Send</button>
     </form>
   </div>

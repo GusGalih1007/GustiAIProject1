@@ -224,3 +224,119 @@ pre {
   white-space: pre-wrap;
   word-break: break-word;
 }
+/* Image Preview on Hover */
+.img-preview-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.preview-image {
+  max-width: 100%;
+  border-radius: 8px;
+  cursor: zoom-in;
+  transition: transform 0.2s ease;
+}
+
+.img-hover-zoom {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 10px;
+  z-index: 999;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+  background-color: #222;
+}
+
+.img-hover-zoom img {
+  width: 300px;
+  height: auto;
+  border-radius: 10px;
+  display: block;
+}
+
+.img-preview-wrapper:hover .img-hover-zoom {
+  display: block;
+}
+
+/* Hide default file input */
+#fileInput {
+  display: none;
+}
+
+/* Custom file upload button */
+.custom-file-upload {
+  display: inline-block;
+  cursor: pointer;
+  font-size: 22px;
+  padding: 8px 12px;
+  margin-left: 10px;
+  border-radius: 20px;
+  background-color: #444;
+  color: #eee;
+  transition: background-color 0.3s ease;
+  user-select: none;
+  line-height: 1;
+}
+
+.custom-file-upload:hover {
+  background-color: #666;
+}
+
+/* Filename text */
+.file-name {
+  margin-left: 10px;
+  color: #bbb;
+  font-size: 14px;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  display: inline-block;
+}
+.img-preview-wrapper {
+  position: relative;
+  display: inline-block;
+  margin: 10px 0;
+}
+
+.preview-image {
+  max-width: 150px;
+  max-height: 150px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  object-fit: cover;
+  display: block;
+}
+
+.img-hover-zoom {
+  position: absolute;
+  top: 0;
+  left: 160px; /* adjust as needed */
+  width: 300px;
+  max-height: 300px;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+  background: #121212;
+}
+
+.img-hover-zoom img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.img-preview-wrapper:hover .img-hover-zoom {
+  opacity: 1;
+  pointer-events: auto;
+}
+
