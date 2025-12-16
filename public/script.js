@@ -13,7 +13,6 @@ fileInput.addEventListener('change', () => {
   }
 });
 
-
 // Scroll chat container to bottom
 function scrollToBottom() {
   chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -39,7 +38,7 @@ function escapeHtml(text) {
   });
 }
 
-// Simple Markdown parser for bold, italics, inline code, code blocks, and links
+// Simple Markdown parser
 function markdownToHtml(text) {
   // Escape first
   let html = escapeHtml(text);
@@ -72,7 +71,7 @@ function markdownToHtml(text) {
   return html;
 }
 
-// Append a message from user or AI (no typing animation)
+// Append a message from user or AI
 function appendMessage(sender, text) {
   const msg = document.createElement('div');
   msg.classList.add('message', sender);
@@ -133,6 +132,16 @@ userInput.addEventListener('input', () => {
   userInput.style.height = `${userInput.scrollHeight}px`;
 });
 
+// Fungsi untuk append HTML message (untuk gambar)
+function appendHtmlMessage(sender, htmlContent) {
+  const msg = document.createElement('div');
+  msg.classList.add('message', sender);
+  msg.innerHTML = htmlContent;
+  chatContainer.appendChild(msg);
+  chatContainer.classList.remove('center');
+  scrollToBottom();
+}
+
 // On submit
 chatForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -142,26 +151,17 @@ chatForm.addEventListener('submit', async (e) => {
 
   if (!prompt && !file) return; // Require either prompt or file
 
-  appendMessage('user', prompt || '[Sent an image]');
+  // Tampilkan pesan user
+  if (file) {
+    appendMessage('user', prompt ? prompt : '[Sent an image]');
+  } else {
+    appendMessage('user', prompt);
+  }
 
   userInput.value = '';
   userInput.style.height = 'auto';
   fileInput.value = '';
   fileNameDisplay.textContent = '';
-
-  function appendHtmlMessage(sender, htmlContent) {
-  const msg = document.createElement('div');
-  msg.classList.add('message', sender);
-
-  msg.innerHTML = htmlContent;
-
-  // Add copy button only for text messages (optional: skip for images)
-  // addCopyButton(msg);  // you can skip for image messages
-
-  chatContainer.appendChild(msg);
-  chatContainer.classList.remove('center');
-  scrollToBottom();
-}
 
   // Loading indicator
   const loadingMsg = document.createElement('div');
@@ -176,31 +176,35 @@ chatForm.addEventListener('submit', async (e) => {
       // Send multipart/form-data
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('prompt', prompt);
+      if (prompt) {
+        formData.append('prompt', prompt);
+      }
 
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
-      data = await res.json();
 
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      data = await res.json();
       loadingMsg.remove();
 
       if (data.output) {
+        // Tampilkan gambar
         appendHtmlMessage('ai', `
-  🖼️ <br>
-  <div class="img-preview-wrapper">
-    <img src="${data.fileUrl}" class="preview-image" />
-    <div class="img-hover-zoom">
-      <img src="${data.fileUrl}" />
-    </div>
-  </div>
-`);
-await appendTypingMessage(data.output);
+          🖼️ Image Uploaded<br>
+          <div class="img-preview-wrapper">
+            <img src="${data.fileUrl}" class="preview-image" />
+          </div>
+        `);
 
+        // Tampilkan respons AI
         await appendTypingMessage(data.output);
       } else {
-        appendMessage('ai', "❌ Failed to process image.");
+        appendMessage('ai', "❌ Failed to process image: " + (data.error || 'Unknown error'));
       }
     } else {
       // Send JSON prompt only
@@ -209,19 +213,23 @@ await appendTypingMessage(data.output);
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
       });
-      data = await res.json();
 
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      data = await res.json();
       loadingMsg.remove();
 
       if (data.output) {
         await appendTypingMessage(data.output);
       } else {
-        appendMessage('ai', "Sorry, I couldn't generate a response.");
+        appendMessage('ai', "Sorry, I couldn't generate a response. " + (data.error || ''));
       }
     }
   } catch (err) {
-    console.error(err);
+    console.error('Error:', err);
     loadingMsg.remove();
-    appendMessage('ai', 'An error occurred while connecting to the AI server.');
+    appendMessage('ai', `An error occurred: ${err.message}`);
   }
 });
